@@ -1,0 +1,99 @@
+import math
+import operator
+import matplotlib.pyplot as plt
+
+def createDataSet():
+	dataSet=[[1,1,'y'],[1,1,'y'],[1,0,'n'],[0,1,'n'],[0,1,'n']]
+	labels=['no surfacing','flippers']
+	return dataSet,labels
+
+def dataSetEnt(dataSet):
+    featureNum={}
+    for objectItem in dataSet:
+        if objectItem[0] not in featureNum.keys():
+            featureNum.setdefault(objectItem[0],0)
+        featureNum[objectItem[0]]+=1
+    n=len(dataSet)
+    shannon=0.0
+    for key in featureNum:
+        prob=float(featureNum[key])/n
+        shannon-=prob*math.log(prob,2)
+    return shannon
+
+def splitList(dataSet,axis,value):
+    returnSet=[]
+    for a in dataSet:
+        if a[axis]==value:
+            b=a[:axis]
+            b.extend(a[axis+1:])
+            returnSet.append(b)
+    return returnSet
+
+def chooseBestFeature(dataSet):
+    baseEnt=dataSetEnt(dataSet)
+    bestFeature=-1
+    bestIfo=0.0
+    number=len(dataSet[0])
+    numberOfDataSet=len((dataSet))
+    subdataSetEnt=0.0
+    infoGain=0.0
+    NewEntropy=0.0
+    bestInfo=0.0
+    for i in range(number):
+        valueList=[a[i] for a in dataSet]
+        for value in valueList:
+            newSet=splitList(dataSet,i,value)
+            subdataSetEnt=dataSetEnt(newSet)
+            NewEntropy=len(newSet)/float(numberOfDataSet)*subdataSetEnt
+            infoGain=baseEnt-NewEntropy
+            if(infoGain>bestInfo):
+                bestInfo=infoGain
+                bestFeature=i
+    return bestFeature
+
+def majorityCnt(classList):
+    classCount={}
+    for vote in classList:
+        if vote[0] not in classCount.keys():
+            classCount[vote[0]]=0
+        classCount[vote[0]]+=1
+        sortedClassCount=sorted(iter(classCount.items()),
+                                key=operator.itemgetter(1),reverse=True)
+    return sortedClassCount[0][0]
+
+def creatTree(dataSet,labels):
+        classList=[a[-1] for a in dataSet]
+        if classList.count(classList[0])==len(dataSet):
+                return classList[0]
+        if len(dataSet[0])==1:
+                return majorityCnt(classList)
+        bestFeature=chooseBestFeature(dataSet)
+        bestLabels=labels[bestFeature]
+        del(labels[bestFeature])
+        myTree={bestLabels:{}}
+        featValue=[a[bestFeature] for a in dataSet]
+        for value in featValue:
+                subLabels=labels[:]
+                myTree[bestLabels][value]=creatTree(splitList(dataSet,
+                                                                 bestFeature,value),subLabels)
+        return myTree
+
+decisionNode=dict(boxstyle="sawtooth",fc="0.8")
+leafNode=dict(boxstyle="round4",fc="0.8")
+arrow_args=dict(arrowstyle="<-")
+
+def plotNode(nodeTxt,centerPt,parentPt,nodeType):
+        createPlot.ax1.annotate(nodeTxt,xy=parentPt,xycoords='axes fraction',
+                                xytext=centerPt,textcoords='axes fraction',
+                                va="center",ha="center",bbox=nodeType,
+                                arrowprops=arrow_args)
+def createPlot():
+        fig = plt.figure(1, facecolor='white')
+        fig.clf()
+        createPlot.ax1 = plt.subplot(111, frameon=False)
+        plotNode('a decision node', (0.5, 0.1), (0.1, 0.5), decisionNode)
+        plotNode('a leaf node', (0.8, 0.1), (0.3, 0.8), leafNode)
+        plt.show()
+
+
+data=createDataSet()
